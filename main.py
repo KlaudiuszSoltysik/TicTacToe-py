@@ -1,55 +1,92 @@
 from machine import Pin
-import time
-import math
+from time import sleep
+from math import inf
+from random import choice
 
 from SR import SR
 
+# Importing necessary libraries and modules
 
-def check_win():
-    if any(field is None for field in board):
-        return None
-    elif board[0] == 'x' and board[1] == 'x' and board[2] == 'x' or board[3] == 'x' and board[4] == 'x' and board[5] == 'x' or board[6] == 'x' and board[7] == 'x' and board[8] == 'x' or board[0] == 'x' and board[3] == 'x' and board[6] == 'x' or board[1] == 'x' and board[4] == 'x' and board[7] == 'x' or board[2] == 'x' and board[5] == 'x' and board[8] == 'x' or board[0] == 'x' and board[4] == 'x' and board[8] == 'x' or board[2] == 'x' and board[4] == 'x' and board[6] == 'x':
-        return -10
-    elif board[0] == 'o' and board[1] == 'o' and board[2] == 'o' or board[3] == 'o' and board[4] == 'o' and board[5] == 'o' or board[6] == 'o' and board[7] == 'o' and board[8] == 'o' or board[0] == 'o' and board[3] == 'o' and board[6] == 'o' or board[1] == 'o' and board[4] == 'o' and board[7] == 'o' or board[2] == 'o' and board[5] == 'o' and board[8] == 'o' or board[0] == 'o' and board[4] == 'o' and board[8] == 'o' or board[2] == 'o' and board[4] == 'o' and board[6] == 'o':
-        return 10
-    else:
-        return 0
+def calculate_best_move(board):
+    # Function to calculate the best move for the computer player (O)
+    best_score = -inf
+    best_move = None
 
-
-def minimax(board, is_maxing):
-    result = check_win()
-
-    if result is not None:
-        return result
-    
-    if is_maxing:
-        best_score = -math.inf
-
-        for i in range(len(board)):
-            if board[i] is None:
-                board[i] = 'o'
+    for row in range(3):
+        for col in range(3):
+            if board[row][col] == ' ':
+                board[row][col] = 'O'
                 score = minimax(board, False)
-                board[i] = None
+                board[row][col] = ' '
 
                 if score > best_score:
                     best_score = score
+                    best_move = (row, col)
 
-    else:
-        best_score = math.inf
+    return best_move
 
-        for i in range(len(board)):
-            if board[i] is None:
-                board[i] = 'x'
-                score = minimax(board, True)
-                board[i] = None
 
-                if score < best_score:
-                    best_score = score
-    
+def minimax(board, is_maximizing):
+    # Minimax algorithm for determining the best move for the computer player (O)
+    if check_winner(board, 'X'):
+        return -1
+    elif check_winner(board, 'O'):
+        return 1
+    elif is_board_full(board):
+        return 0
+
+    best_score = -inf if is_maximizing else inf
+    player = 'O' if is_maximizing else 'X'
+
+    for row in range(3):
+        for col in range(3):
+            if board[row][col] == ' ':
+                board[row][col] = player
+                score = minimax(board, not is_maximizing)
+                board[row][col] = ' '
+
+                if is_maximizing:
+                    best_score = max(score, best_score)
+                else:
+                    best_score = min(score, best_score)
+
     return best_score
 
 
+def check_winner(board, player):
+    # Function to check if a player has won the game
+    for row in board:
+        if all(cell == player for cell in row):
+            return True
+
+    for col in range(3):
+        if all(row[col] == player for row in board):
+            return True
+
+    if board[0][0] == board[1][1] == board[2][2] == player:
+        return True
+
+    if board[0][2] == board[1][1] == board[2][0] == player:
+        return True
+
+    return False
+
+
+def is_board_full(board):
+    # Function to check if the board is full and there is no winner
+    return all(' ' not in row for row in board)
+
+
 def light_diodes():
+    # Function to update the LED diodes based on the game board
+    for row in range(3):
+        for col in range(3):
+            if board[row][col] == 'X':
+                x_fields[row * 3 + col] = 1
+            elif board[row][col] == 'O':
+                o_fields[row * 3 + col] = 1
+
+    # Update the LED diodes based on the values in x_fields and o_fields lists
     diodes_green.clear()
     number = (
         x_fields[-2] * 1
@@ -82,7 +119,8 @@ def light_diodes():
         diode_8_red.value(1)
 
 
-# DEFINE PINS
+# Setting up pins and initializing variables
+
 control_buttons = [
     Pin(34, Pin.IN),
     Pin(35, Pin.IN),
@@ -111,48 +149,92 @@ diodes_green = SR(DS2, SHCP2, STCP, MR, OE)
 diode_8_red = Pin(4, Pin.OUT)
 diode_8_green = Pin(2, Pin.OUT)
 
-player_move = True
 game_loop = False
-board = [None, None, None, None, None, None, None, None, None]
 x_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 o_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-# MAIN LOOP
-while True:
-    if player_move:
-        for i, button in enumerate(control_buttons):
-            if button.value() and not x_fields[i] and not o_fields[i]:
-                game_loop = True
-                player_move = False
-                x_fields[i] = 1
-                board[i] = 'x'
+# Getting the difficulty level from the difficulty switch
+difficulty = difficulty_switch.value()
 
-                light_diodes()
-    else:
-        # IMPOSSIBLE DIFFICULTY
-        if difficulty_switch:
+# Game logic based on the difficulty level
 
-            best_score = -math.inf
-            best_move = None
+if difficulty:
+    # Difficulty level is set to player mode
+    player_move = True
+    board = [[' ', ' ', ' '],
+             [' ', ' ', ' '],
+             [' ', ' ', ' ']]
 
-            for i in range(len(board)):
-                if board[i] is None:
-                    board[i] = 'o'
-                    score = minimax(board, False)
-                    board[i] = None
+    light_diodes()
 
-                    if score > best_score:
-                        best_score = score
-                        best_move = i
-
-            o_fields[best_move] = 1
-            board[best_move] = 'o'
-            player_move = True
+    while True:
+        if player_move:
+            # Player's move
+            for i, button in enumerate(control_buttons):
+                if button.value() and not x_fields[i] and not o_fields[i]:
+                    game_loop = True
+                    player_move = False
+                    board[i // 3][i % 3] = 'X'
 
             light_diodes()
 
-        # HARD DIFFICULTY
+            if check_winner(board, 'X'):
+                print('you won')
+                break
         else:
-            pass
+            # Computer's move
+            if not is_board_full(board):
+                x, y = calculate_best_move(board)
+                
+                board[x][y] = 'O'
+                player_move = True
+                
+                light_diodes()
 
-    time.sleep(0.1)
+                if check_winner(board, 'O'):
+                    print('you lost')
+                    break
+            else:
+                print('tie')
+                break
+else:
+    # Difficulty level is set to computer mode
+    r = choice([1, 3, 5, 7])
+    player_move = True
+    board = [[' ', ' ', ' '],
+             [' ', ' ', ' '],
+             [' ', ' ', ' ']]
+
+    board[r // 3][r % 3] = 'O'
+    light_diodes()
+
+    while True:
+        if player_move:
+            # Player's move
+            for i, button in enumerate(control_buttons):
+                if button.value() and not x_fields[i] and not o_fields[i]:
+                    game_loop = True
+                    player_move = False
+                    board[i // 3][i % 3] = 'X'
+
+            light_diodes()
+
+            if check_winner(board, 'X'):
+                print('you won')
+                break
+        else:
+            # Computer's move
+            if not is_board_full(board):
+                x, y = calculate_best_move(board)
+                
+                board[x][y] = 'O'
+                player_move = True
+                
+                light_diodes()
+
+                if check_winner(board, 'O'):
+                    print('you lost')
+                    break
+            else:
+                print('tie')
+                break
