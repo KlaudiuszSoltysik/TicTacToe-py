@@ -5,7 +5,6 @@ from random import choice
 
 from SR import SR
 
-# Importing necessary libraries and modules
 
 def calculate_best_move(board):
     # Function to calculate the best move for the computer player (O)
@@ -72,6 +71,23 @@ def check_winner(board, player):
     return False
 
 
+def check_winning_coordinates(board):
+    # Function to check winning coorditates
+    for row in board:
+        if row[0] == row[1] == row[2] and row[0]:
+            return [(row[0], i) for i in range(3)]
+    
+    for col in range(3):
+        if board[0][col] == board[1][col] == board[2][col] and board[0][col]:
+            return [(i, col) for i in range(3)]
+    
+    if board[0][0] == board[1][1] == board[2][2] and board[0][0]:
+        return [(i, i) for i in range(3)]
+
+    if board[0][2] == board[1][1] == board[2][0] and board[0][2]:
+        return [(i, 2-i) for i in range(3)]
+
+
 def is_board_full(board):
     # Function to check if the board is full and there is no winner
     return all(' ' not in row for row in board)
@@ -79,11 +95,18 @@ def is_board_full(board):
 
 def light_diodes():
     # Function to update the LED diodes based on the game board
+
+    x_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    o_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+
     for row in range(3):
         for col in range(3):
             if board[row][col] == 'X':
                 x_fields[row * 3 + col] = 1
             elif board[row][col] == 'O':
+                o_fields[row * 3 + col] = 1
+            elif board[row][col] == '!':
+                x_fields[row * 3 + col] = 1
                 o_fields[row * 3 + col] = 1
 
     # Update the LED diodes based on the values in x_fields and o_fields lists
@@ -102,6 +125,8 @@ def light_diodes():
 
     if x_fields[-1]:
         diode_8_green.value(1)
+    else:
+        diode_8_green.value(0)
 
     number = (
         o_fields[-2] * 1
@@ -117,10 +142,32 @@ def light_diodes():
 
     if o_fields[-1]:
         diode_8_red.value(1)
+    else:
+        diode_8_red.value(0)
+
+
+def flash_led(coordinates):
+    # Function to make led flash
+
+    signs = []
+    for c in coordinates:
+        signs.append(board[c[0]][c[1]])
+
+    while True:
+        for c in coordinates:
+            board[c[0]][c[1]] = ' '
+
+        light_diodes()
+        sleep(0.25)
+
+        for i, c in enumerate(coordinates):
+            board[c[0]][c[1]] = signs[i]
+
+        light_diodes()
+        sleep(0.25)
 
 
 # Setting up pins and initializing variables
-
 control_buttons = [
     Pin(34, Pin.IN),
     Pin(35, Pin.IN),
@@ -150,19 +197,18 @@ diode_8_red = Pin(4, Pin.OUT)
 diode_8_green = Pin(2, Pin.OUT)
 
 game_loop = False
+game_state = None
 x_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 o_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-# Getting the difficulty level from the difficulty switch
 difficulty = difficulty_switch.value()
 
 # Game logic based on the difficulty level
-
 if difficulty:
     # Difficulty level is set to player mode
     player_move = True
     board = [[' ', ' ', ' '],
-             [' ', ' ', ' '],
+             ['X', 'O', ' '],
              [' ', ' ', ' ']]
 
     light_diodes()
@@ -177,10 +223,6 @@ if difficulty:
                     board[i // 3][i % 3] = 'X'
 
             light_diodes()
-
-            if check_winner(board, 'X'):
-                print('you won')
-                break
         else:
             # Computer's move
             if not is_board_full(board):
@@ -192,10 +234,9 @@ if difficulty:
                 light_diodes()
 
                 if check_winner(board, 'O'):
-                    print('you lost')
+                    game_state = 'O'
                     break
             else:
-                print('tie')
                 break
 else:
     # Difficulty level is set to computer mode
@@ -218,10 +259,6 @@ else:
                     board[i // 3][i % 3] = 'X'
 
             light_diodes()
-
-            if check_winner(board, 'X'):
-                print('you won')
-                break
         else:
             # Computer's move
             if not is_board_full(board):
@@ -233,8 +270,16 @@ else:
                 light_diodes()
 
                 if check_winner(board, 'O'):
-                    print('you lost')
+                    game_state = 'O'
                     break
             else:
-                print('tie')
                 break
+
+if game_state == 'O':
+    coordinates = check_winning_coordinates(board)
+
+    board[coordinates[0][0]][coordinates[0][1]] = '!'
+    board[coordinates[1][0]][coordinates[1][1]] = '!'
+    board[coordinates[2][0]][coordinates[2][1]] = '!'
+
+    flash_led(coordinates)
