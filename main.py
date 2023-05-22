@@ -6,14 +6,15 @@ from random import choice
 from SR import SR
 
 
+# Function to calculate the best move for the computer player (O)
 def calculate_best_move(board):
-    # Function to calculate the best move for the computer player (O)
     best_score = -inf
     best_move = None
 
     for row in range(3):
         for col in range(3):
             if board[row][col] == ' ':
+
                 board[row][col] = 'O'
                 score = minimax(board, False)
                 board[row][col] = ' '
@@ -25,8 +26,8 @@ def calculate_best_move(board):
     return best_move
 
 
+# Minimax algorithm for determining the best move
 def minimax(board, is_maximizing):
-    # Minimax algorithm for determining the best move for the computer player (O)
     if check_winner(board, 'X'):
         return -1
     elif check_winner(board, 'O'):
@@ -40,6 +41,7 @@ def minimax(board, is_maximizing):
     for row in range(3):
         for col in range(3):
             if board[row][col] == ' ':
+
                 board[row][col] = player
                 score = minimax(board, not is_maximizing)
                 board[row][col] = ' '
@@ -52,8 +54,8 @@ def minimax(board, is_maximizing):
     return best_score
 
 
+# Function to check if a player has won the game
 def check_winner(board, player):
-    # Function to check if a player has won the game
     for row in board:
         if all(cell == player for cell in row):
             return True
@@ -71,14 +73,14 @@ def check_winner(board, player):
     return False
 
 
+# Function to check winning coorditates
 def check_winning_coordinates(board):
-    # Function to check winning coorditates
-    for row in board:
-        if row[0] == row[1] == row[2] and row[0]:
-            return [(row[0], i) for i in range(3)]
+    for row in range(3):
+        if board[row][0] == board[row][1] == board[row][2]:
+            return [(row, i) for i in range(3)]
     
     for col in range(3):
-        if board[0][col] == board[1][col] == board[2][col] and board[0][col]:
+        if board[0][col] == board[1][col] == board[2][col]:
             return [(i, col) for i in range(3)]
     
     if board[0][0] == board[1][1] == board[2][2] and board[0][0]:
@@ -88,14 +90,13 @@ def check_winning_coordinates(board):
         return [(i, 2-i) for i in range(3)]
 
 
+# Function to check if the board is full
 def is_board_full(board):
-    # Function to check if the board is full and there is no winner
     return all(' ' not in row for row in board)
 
 
+# Function to update the LED diodes based on the game board
 def light_diodes():
-    # Function to update the LED diodes based on the game board
-
     x_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     o_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -146,10 +147,10 @@ def light_diodes():
         diode_8_red.value(0)
 
 
+# Function to make led flash
 def flash_led(coordinates):
-    # Function to make led flash
-
     signs = []
+
     for c in coordinates:
         signs.append(board[c[0]][c[1]])
 
@@ -197,7 +198,9 @@ diode_8_red = Pin(4, Pin.OUT)
 diode_8_green = Pin(2, Pin.OUT)
 
 game_loop = False
+player_move = True
 game_state = None
+
 x_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 o_fields = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -206,28 +209,27 @@ difficulty = difficulty_switch.value()
 # Game logic based on the difficulty level
 if difficulty:
     # Difficulty level is set to player mode
-    player_move = True
     board = [[' ', ' ', ' '],
-             ['X', 'O', ' '],
+             [' ', ' ', ' '],
              [' ', ' ', ' ']]
 
     light_diodes()
 
     while True:
         if player_move:
-            # Player's move
             for i, button in enumerate(control_buttons):
-                if button.value() and not x_fields[i] and not o_fields[i]:
+                if button.value() and board[i // 3][i % 3] == ' ':
+
                     game_loop = True
                     player_move = False
                     board[i // 3][i % 3] = 'X'
 
             light_diodes()
         else:
-            # Computer's move
             if not is_board_full(board):
+
                 x, y = calculate_best_move(board)
-                
+
                 board[x][y] = 'O'
                 player_move = True
                 
@@ -240,27 +242,27 @@ if difficulty:
                 break
 else:
     # Difficulty level is set to computer mode
-    r = choice([1, 3, 5, 7])
-    player_move = True
-    board = [[' ', ' ', ' '],
-             [' ', ' ', ' '],
-             [' ', ' ', ' ']]
+    # Chosing starting move for computer
+     board = [[' ', ' ', ' '],
+              [' ', ' ', ' '],
+              [' ', ' ', ' ']]
 
+    r = choice([1, 3, 5, 7])
     board[r // 3][r % 3] = 'O'
+
     light_diodes()
 
     while True:
         if player_move:
-            # Player's move
             for i, button in enumerate(control_buttons):
-                if button.value() and not x_fields[i] and not o_fields[i]:
+                if button.value() and board[i // 3][i % 3] == ' ':
+
                     game_loop = True
                     player_move = False
                     board[i // 3][i % 3] = 'X'
 
             light_diodes()
         else:
-            # Computer's move
             if not is_board_full(board):
                 x, y = calculate_best_move(board)
                 
@@ -275,6 +277,7 @@ else:
             else:
                 break
 
+# Flashing winning row
 if game_state == 'O':
     coordinates = check_winning_coordinates(board)
 
