@@ -7,3 +7,4 @@ Player vs computer TicTacToe game, written with MicroPython on ESP32. Project wa
 ## Diagram
 ![image](https://github.com/KlaudiuszSoltysik/TicTacToe/assets/109976941/dc480683-237d-44c3-99a2-1ee963a225f8)
 ## Videopresentation
+https://youtu.be/M9RxywRG_0U
