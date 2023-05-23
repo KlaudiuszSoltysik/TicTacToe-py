@@ -1,10 +1,9 @@
 # TicTacToe
-Player vs computer TicTacToe game, written with MicroPython on ESP32. Project was created with Wokwi simulator. Visit https://wokwi.com/projects/365185972838894593 to run this project.
+Player vs computer TicTacToe game, written with MicroPython on ESP32. Project was created with Wokwi simulator. Visit https://wokwi.com/projects/365360282075621377 to run this project.
 ## Description
 - switching starting player (player or computer)
 - minimax algorithm
 - impossible difficulty
 ## Diagram
-![image](https://github.com/KlaudiuszSoltysik/TicTacToe/assets/109976941/dc480683-237d-44c3-99a2-1ee963a225f8)
+![image](https://github.com/KlaudiuszSoltysik/TicTacToe-py/assets/109976941/8dbe89cb-7c27-4053-ac1e-69dcfe7701a9)
 ## Videopresentation
-https://youtu.be/M9RxywRG_0U
