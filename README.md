@@ -5,5 +5,6 @@ Player vs computer TicTacToe game, written with MicroPython on ESP32. Project wa
 - minimax algorithm
 - impossible difficulty
 ## Diagram
-![image](https://github.com/KlaudiuszSoltysik/TicTacToe-py/assets/109976941/8dbe89cb-7c27-4053-ac1e-69dcfe7701a9)
+![image](https://github.com/KlaudiuszSoltysik/TicTacToe-py/assets/109976941/ff056da1-5146-4080-87f5-45eed479bb44)
 ## Videopresentation
+https://youtu.be/M9RxywRG_0U
